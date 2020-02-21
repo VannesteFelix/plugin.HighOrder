@@ -95,8 +95,15 @@ public:
     typedef StdVectorTypes< Vec3, Vec3, Real >     GeometricalTypes ; /// assumes the geometry object type is 3D
 	typedef typename sofa::component::topology::HighOrderTetrahedronSetGeometryAlgorithms<GeometricalTypes>::VecPointID VecPointID;
 
-    typedef helper::vector<Real> ParameterArray;
+    typedef Vec4 ParameterArray;
     typedef helper::vector<Coord> AnisotropyDirectionArray;
+
+    typedef core::topology::BaseMeshTopology::index_type Index;
+    typedef core::topology::BaseMeshTopology::SeqTetrahedra VecElement;
+    /// Rigid transformation (rotation) matrix
+    typedef defaulttype::MatNoInit<3, 3, Real> Transformation;
+    /// Stiffness matrix ( = RJKJtRt  with K the Material stiffness matrix, J the strain-displacement matrix, and R the transformation matrix if any )
+    typedef defaulttype::Mat<12, 12, Real> StiffnessMatrix;
 
     typedef enum
     {
@@ -164,7 +171,7 @@ protected:
 	// the array where the weights and coordinates of each integration points are stored
 	std::vector<NumericalIntegrationStiffnessData> numericalIntegrationStiffnessDataArray;
 	/// the elasticity tensor 
-	Mat6x6 elasticityTensor;
+    Mat6x6 elasticityTensor;
 
     /// data structure stored for each tetrahedron
     class TetrahedronRestInformation
@@ -247,6 +254,11 @@ protected:
 	std::vector<Mat3x3> anisotropyMatrixArray;
 	std::vector<Real> anisotropyScalarArray;
 
+    /////////////// TEST ////////////////////////
+    std::vector<std::vector<Mat3x3>> vecAnisotropyMatrixArray;
+    std::vector<std::vector<Real>> vecAnisotropyScalarArray;
+    ////////////////////////////////////////////
+
     Real lambda;  /// first Lame coefficient
     Real mu;    /// second Lame coefficient
 
@@ -264,12 +276,21 @@ public:
 	Data<std::string> d_method; ///< the computation method of the displacements
 
 
-	Data<Real> d_poissonRatio; // stiffness coefficient for isotropic elasticity;
-	Data<Real> d_youngModulus;
+    Data<helper::vector<Real>> d_poissonRatio; // stiffness coefficient for isotropic elasticity;
+    Data<helper::vector<Real>> d_youngModulus;
 
-	Data<std::string> d_anisotropy; // the type of isotropy
-	Data<ParameterArray> d_anisotropyParameter; // the set of parameters defining the elasticity anisotropy
-	Data<AnisotropyDirectionArray> d_anisotropyDirection; // the directions of anisotropy
+    Data<std::string> d_anisotropy; // the type of isotropy
+    Data<helper::vector<ParameterArray>> d_anisotropyParameter; // the set of parameters defining the elasticity anisotropy
+    Data<AnisotropyDirectionArray> d_anisotropyDirection; // the directions of anisotropy
+    Data<helper::vector<Mat3x3>> d_ortho_matrix;
+    Data<helper::vector<Real>> d_ortho_scalar;
+
+//    Data<Real> d_poissonRatio; // stiffness coefficient for isotropic elasticity;
+//    Data<Real> d_youngModulus;
+
+//	Data<std::string> d_anisotropy; // the type of isotropy
+//    Data<ParameterArray> d_anisotropyParameter; // the set of parameters defining the elasticity anisotropy
+//	Data<AnisotropyDirectionArray> d_anisotropyDirection; // the directions of anisotropy
 
 	/// the order of integration for numerical integration
 	Data<size_t>	     numericalIntegrationOrder;
@@ -291,19 +312,22 @@ public:
     virtual void addDForce(const sofa::core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecDeriv&   datadF , const DataVecDeriv&   datadX ) ;
     virtual SReal getPotentialEnergy(const core::MechanicalParams*, const DataVecCoord&) const;
 
+    void addKToMatrix(const core::MechanicalParams* mparams, const sofa::core::behavior::MultiMatrixAccessor* matrix ) override;
+    void addKToMatrix(sofa::defaulttype::BaseMatrix *mat, SReal k, unsigned int &offset) override;
+
     void updateTopologyInformation();
 
     virtual Real getLambda() const { return lambda;}
     virtual Real getMu() const { return mu;}
 
-    void setYoungModulus(const double modulus)
-    {
-        d_youngModulus.setValue((Real)modulus);
-    }
-    void setPoissonRatio(const double ratio)
-    {
-        d_poissonRatio.setValue((Real)ratio);
-    }
+//    void setYoungModulus(const double modulus)
+//    {
+//        d_youngModulus.setValue((Real)modulus);
+//    }
+//    void setPoissonRatio(const double ratio)
+//    {
+//        d_poissonRatio.setValue((Real)ratio);
+//    }
     void setRotationDecompositionMethod( const RotationDecompositionMethod m)
     {
         decompositionMethod=m;
@@ -313,8 +337,13 @@ public:
     void updateLameCoefficients();
 
 
-	void computeTetrahedronStiffnessEdgeMatrix(const Coord position[4],Mat6x9 edgeStiffness[2]);
-	void computeTetrahedronStiffnessEdgeMatrix(const Coord position[4],Mat3x3 edgeStiffness[6]);
+    void computeTetrahedronStiffnessEdgeMatrix(const Coord position[4],Mat6x9 edgeStiffness[2]);
+    void computeTetrahedronStiffnessEdgeMatrix(const Coord position[4],Mat3x3 edgeStiffness[6]);
+
+    /////////////// TEST ////////////////////////
+    void computeTetrahedronStiffnessEdgeMatrixForElts(size_t eltIndex,const Coord point[4], Mat6x9 edgeStiffnessVectorized[2]);
+    /////////////////////////////////////////////
+
 	friend class FTCFTetrahedronHandler;
 
 protected :
@@ -332,7 +361,11 @@ protected :
 	// update anisotropyMatrixArray and anisotropyScalarArray based on input data
 	void assembleAnisotropicTensors();
 	// compute elasticity tensor for isotropic and anisotropic cases
-	void computeElasticityTensor(); 		
+    void computeElasticityTensor();
+
+    void computeKelvinModes();
+    void computeKelvinModesForElts(size_t eltIndex);
+
 
 };
 
