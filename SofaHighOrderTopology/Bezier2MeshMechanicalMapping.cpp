@@ -28,7 +28,7 @@ int Bezier2MeshMechanicalMappingClass = core::RegisterObject("Mechanical mapping
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec3Types, Vec3Types >;
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec2Types, Vec2Types >;
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec1Types, Vec1Types >;
-template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec3Types, ExtVec3Types >;
+//template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec3Types, ExtVec3Types >;
 
 
 
