@@ -90,12 +90,15 @@ public:
     typedef Vec<4,Real> Vec4;
     typedef Vec<6,Real> Vec6;
     typedef Vec<9,Real> Vec9;
+    typedef Vec<10,Real> Vec10;    
     typedef Vec<16, Real> Vec16;
     typedef Vec<16, int> Vec16Int;
     typedef StdVectorTypes< Vec3, Vec3, Real >     GeometricalTypes ; /// assumes the geometry object type is 3D
 	typedef typename sofa::component::topology::HighOrderTetrahedronSetGeometryAlgorithms<GeometricalTypes>::VecPointID VecPointID;
 
     typedef Vec4 ParameterArray;
+    // typedef Vec10 ParameterArray;
+    
     typedef helper::vector<Coord> AnisotropyDirectionArray;
 
     typedef core::topology::BaseMeshTopology::index_type Index;
@@ -282,8 +285,8 @@ public:
     Data<std::string> d_anisotropy; // the type of isotropy
     Data<helper::vector<ParameterArray>> d_anisotropyParameter; // the set of parameters defining the elasticity anisotropy
     Data<AnisotropyDirectionArray> d_anisotropyDirection; // the directions of anisotropy
-    Data<helper::vector<Mat3x3>> d_ortho_matrix;
-    Data<helper::vector<Real>> d_ortho_scalar;
+    Data<helper::vector<helper::vector<Mat3x3>>> d_ortho_matrix;
+    Data<helper::vector<helper::vector<Real>>> d_ortho_scalar;
 
 //    Data<Real> d_poissonRatio; // stiffness coefficient for isotropic elasticity;
 //    Data<Real> d_youngModulus;
@@ -304,6 +307,12 @@ public:
 	Data<Real> d_assemblyTime;
 	// whether each affine element should be assembled with the affine assembly method irrespective to the chosen integration method  
 	Data<bool> d_forceAffineAssemblyForAffineElements;
+
+    Data< bool > d_drawHeterogeneousTetra; ///< Draw Heterogeneous Tetra in different color
+    Data< bool > d_drawDirection;
+    Data< Real > d_transparency;
+    Data< bool > test_visu;
+
 
     virtual void init();
 
@@ -365,8 +374,8 @@ protected :
 
     void computeKelvinModes();
     void computeKelvinModesForElts(size_t eltIndex);
-
-
+//    Mat3x3 matrixD(Real _lambda,Vec3 v1,Vec3 v2,Vec3 n,Eigen::MatrixXd m);
+//    Mat3x3 matrixZ(Real _lambda_k, Real _lambda_i, Real _lambda_j,Eigen::MatrixXd m);
 };
 
 

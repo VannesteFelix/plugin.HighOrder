@@ -3,7 +3,7 @@
 
 #include "LagrangeTriangleSetGeometryAlgorithms.h"
 #include "HighOrderTriangleSetGeometryAlgorithms.inl"
-#include <sofa/core/visual/VisualParams.h>
+//#include <sofa/core/visual/VisualParams.h>
 #include "LagrangeTriangleCoefficients.h"
 #include <SofaBaseTopology/CommonAlgorithms.h>
 #include <sofa/helper/rmath.h>

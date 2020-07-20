@@ -15,6 +15,9 @@
 #include <sofa/helper/decompose.h>
 #include <boost/make_shared.hpp>
 #include <SofaBaseLinearSolver/CompressedRowSparseMatrix.h>
+#include <sofa/helper/ColorMap.h>
+
+#include <Eigen/Dense>
 
 namespace sofa
 {
@@ -24,6 +27,8 @@ namespace component
 
 namespace forcefield
 {
+
+using sofa::core::objectmodel::ComponentState ;
 
 using namespace sofa::defaulttype;
 using namespace	sofa::component::topology;
@@ -533,6 +538,9 @@ HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::HighOrderTetrahedralCo
         , d_oneRotationPerIntegrationPoint(initData(&d_oneRotationPerIntegrationPoint, false, "oneRotationPerIntegrationPoint", "if true then computes one rotation per integration point"))
         , d_assemblyTime(initData(&d_assemblyTime, (Real)0, "assemblyTime", "the time spent in assembling the stiffness matrix. Only updated if printLog is set to true"))
         , d_forceAffineAssemblyForAffineElements(initData(&d_forceAffineAssemblyForAffineElements, true, "forceAffineAssemblyForAffineElements", "if true affine tetrahedra are always assembled with the closed form formula, Otherwise use the method defined in integrationMethod"))
+        , d_drawHeterogeneousTetra(initData(&d_drawHeterogeneousTetra,true,"drawHeterogeneousTetra","Draw Heterogeneous Tetra in different color"))
+        , d_drawDirection(initData(&d_drawDirection,true,"drawDirection","Draw different color for each direction"))
+        , d_transparency(initData(&d_transparency,(Real)0.25,"transparency","transparency [0,1]"))
         , lambda(0)
         , mu(0)
         , tetrahedronHandler(NULL)
@@ -558,6 +566,8 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::assembleAnisotrop
 template <class DataTypes>
 void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::init()
 {
+    this->m_componentstate = ComponentState::Invalid;
+
     //	serr << "initializing HighOrderTetrahedralCorotationalFEMForceField" << sendl;
     this->Inherited::init();
 
@@ -579,7 +589,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::init()
         elasticitySymmetry= TRANSVERSE_ISOTROPIC;
     else if (d_anisotropy.getValue() == "ortho_scalar")
     {
-        msg_warning() << "orthotropic elasticitySymmetry is not yet implemented";
+        //msg_warning() << "orthotropic elasticitySymmetry is not yet implemented";
         elasticitySymmetry= ORTHOTROPIC;
     }
 	else
@@ -658,6 +668,16 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::init()
             {
                 computeKelvinModesForElts(i);
             }
+
+            // int k=0;
+            // Mat3x3 E;
+            // for (k;k<6;k++)
+            // {
+            //     msg_info() << vecAnisotropyMatrixArray[0][k];
+            //     msg_info() << vecAnisotropyScalarArray[0][k];
+            //     E += vecAnisotropyMatrixArray[0][k] * vecAnisotropyScalarArray[0][k];
+            // }
+            // msg_info() << E;
         }
         else
             computeKelvinModes();
@@ -1025,6 +1045,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::init()
     tetrahedronInfo.endEdit();
 
 	updateTopologyInfo=true;
+    this->m_componentstate = ComponentState::Valid ;
 
 }
 
@@ -1128,8 +1149,8 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeKelvinMode
 {
     if (elasticitySymmetry != ISOTROPIC)
     {
-
         Vec4 anisotropyParameter=d_anisotropyParameter.getValue()[0];
+        // Vec10 anisotropyParameter=d_anisotropyParameter.getValue()[0];
 
         Real youngModulus = d_youngModulus.getValue()[0];
         Real poissonRatio = d_poissonRatio.getValue()[0];
@@ -1453,13 +1474,30 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeKelvinMode
     }
 }
 
+Mat<3,3,double> matrixD(double _lambda,Vec<3,double> v1,Vec<3,double> v2,Vec<3,double> n,Eigen::Matrix3d m)
+{
+    double val1_D = m(0,1)*m(1,2) - m(0,1) * (m(1,1) - _lambda);
+    double val2_D = m(0,1)*m(0,2) - m(1,2) * (m(0,0) - _lambda);
+    double val3_D = (m(0,0) - _lambda)*(m(1,1) - _lambda) - pow(m(0,1),2);
+
+    return val1_D * dyad(v1,v1) + val2_D * dyad(v2,v2) + val3_D * dyad(n,n);
+}
+
+double matrixZ(double _lambda_k, double _lambda_i, double _lambda_j,Eigen::Matrix3d m)
+{
+    return 1 / ( (_lambda_k - _lambda_i)*(_lambda_k - _lambda_j)*(m(0,1)*(pow(m(0,2),2) - pow(m(1,2),2)) - m(0,2)*m(1,2)*(m(0,0) - m(1,1)))
+                 * ( (m(0,1)*m(0,2) - m(1,2)*(m(0,0) - _lambda_i))*( (m(0,0) - _lambda_j)  + m(0,1) + m(0,2)) )
+                 - (m(0,1)*m(1,2) - m(0,2)*(m(1,1) - _lambda_i))*(m(0,1) + (m(1,1) - _lambda_j) + m(1,2)) );
+}
+
 template<class DataTypes>
 void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeKelvinModesForElts(size_t eltIndex)
 {
     if (elasticitySymmetry != ISOTROPIC)
     {
         Vec4 anisotropyParameter=d_anisotropyParameter.getValue()[eltIndex];
-        //msg_info() << anisotropyParameter;
+        // Vec10 anisotropyParameter=d_anisotropyParameter.getValue()[eltIndex];
+        //msg_info() << elasticitySymmetry;
 
         Real youngModulus = d_youngModulus.getValue()[eltIndex];
         Real poissonRatio = d_poissonRatio.getValue()[eltIndex];
@@ -1592,7 +1630,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeKelvinMode
 
             Real poissonRatioLongitudinalTransverse=poissonRatioTransverseLongitudinal*youngModulusLongitudinal/youngModulusTransverse;
 
-            Real gamma=1/(1-poissonRatioTransverse*poissonRatioTransverse-2*poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal-2*poissonRatioTransverse*poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal);
+            Real gamma=1/(1-pow(poissonRatioTransverse,2)-2*poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal-2*poissonRatioTransverse*poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal);
 
             Real c11=youngModulusTransverse*gamma*(1-poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal);
             Real c33=youngModulusLongitudinal*gamma*(1-poissonRatioTransverse*poissonRatioTransverse);
@@ -1600,17 +1638,21 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeKelvinMode
 
             //Real c13=youngModulusTransverse*gamma*(poissonRatioLongitudinalTransverse+poissonRatioTransverse*poissonRatioTransverseLongitudinal);
             Real test1=youngModulusTransverse*(poissonRatioLongitudinalTransverse+poissonRatioTransverse*poissonRatioLongitudinalTransverse);
-            Real test2=youngModulusLongitudinal*(poissonRatioTransverseLongitudinal+poissonRatioTransverse*poissonRatioTransverseLongitudinal);
-            Real c13 = (test1+test2)/2;
+            //Real test2=youngModulusLongitudinal*(poissonRatioTransverseLongitudinal+poissonRatioTransverse*poissonRatioTransverseLongitudinal);
+            Real c13 = test1 * gamma;//(test1+test2)/2;
 
             Real c44=youngModulusTransverse/(2*(1+poissonRatioTransverse));
             Real c55= shearModulusLongitudinal; // = c66
 
             //msg_info() << "C11      "<< c11;
-            //msg_info() << "C12      "<< c12;
+            //msg_info() << "C22      "<< c11;
             //msg_info() << "C33      "<< c33;
-            //msg_info() << "C44/C55  "<< c44;
-            //msg_info() << "C66      "<< c66;
+            //msg_info() << "C44      "<< c55;
+            //msg_info() << "C55      "<< c55;
+            //msg_info() << "C66      "<< c44;
+            //msg_info() << "C12      "<< c12;
+            //msg_info() << "C13      "<< c13;
+            //msg_info() << "C23      "<< c13;
 
             // (4.119)
             Real talpha=sqrt(2.0f)*(c11+c12-c33)/(4*c13);
@@ -1692,79 +1734,101 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeKelvinMode
             //msg_info() << Nh1;
 
         }
-        else if (anisotropyParameter[0]==ORTHOTROPIC)
+        else //if (anisotropyParameter[0]==ORTHOTROPIC)
         {
-            //Coord n = d_anisotropyDirection.getValue()[eltIndex];
+            Real young_1 =    anisotropyParameter[1];
+            Real young_2 =    anisotropyParameter[2];
+            Real young_3 =    anisotropyParameter[3];
+            Real poisson_12 = anisotropyParameter[4];
+            Real poisson_23 = anisotropyParameter[5];
+            Real poisson_31 = anisotropyParameter[6];
+            Real shear_12 =   anisotropyParameter[7];
+            Real shear_13 =   anisotropyParameter[8];
+            Real shear_23 =   anisotropyParameter[9];
+            
+            Real poisson_21 = young_2 * poisson_12 / young_1;
+            Real poisson_32 = young_3 * poisson_23 / young_2;
+            Real poisson_13 = young_1 * poisson_31 / young_3;
+        
+        
+            Real gamma = 1 / (1 - poisson_12 * poisson_21 - poisson_23 * poisson_32 - poisson_31 * poisson_13 - 2 * poisson_21 * poisson_32 * poisson_13);
+        
+            Real c11 = young_1 * (1 - poisson_23 * poisson_32) * gamma;
+            Real c22 =  young_2 * (1 - poisson_13 * poisson_31) * gamma;
+            Real c33 = young_3 * (1 - poisson_12 * poisson_21) * gamma;
+            Real c12 = young_1 * (poisson_21 + poisson_31 * poisson_23) * gamma;
+            Real c13 = young_1 * (poisson_31 + poisson_21 * poisson_32) * gamma;
+            Real c23 = young_2 * (poisson_32 + poisson_12 * poisson_31) * gamma;
+            Real c44 = shear_23;
+            Real c55 = shear_13;
+            Real c66 = shear_12;
 
-            //n/=n.norm();
-            //Coord v1,v2;
-            //if ((n[0]!=0) || (n[1]!=0)) {
-            //    v1=Coord(-n[1],n[0],n[2]);
-            //} else {
-            //    v1=Coord(1,0,0);
-            //}
-
-            //Real val1 = d_ortho_matrix.getValue()[0];
-            //Real val2 = d_ortho_matrix.getValue()[1];
-            //Real val3 = d_ortho_matrix.getValue()[2];
-            //Mat3x3 Nh1 = val1 * dyad(v1,v1) + val2 * dyad(v2,v2) + val3 * dyad(n,n);
-            //Nh1/=sqrt(val1*val1+val2*val2+val3*val3);
-
-            //val1 = d_ortho_matrix.getValue()[3];
-            //val2 = d_ortho_matrix.getValue()[4];
-            //val3 = d_ortho_matrix.getValue()[5];
-            //Mat3x3 Nh2 = val1 * dyad(v1,v1) + val2 * dyad(v2,v2) + val3 * dyad(n,n);
-            //Nh2/=sqrt(val1*val1+val2*val2+val3*val3);
-
-            //val1 = d_ortho_matrix.getValue()[6];
-            //val2 = d_ortho_matrix.getValue()[7];
-            //val3 = d_ortho_matrix.getValue()[8];
-            //Mat3x3 Nh3 = val1 * dyad(v1,v1) + val2 * dyad(v2,v2) + val3 * dyad(n,n);
-            //Nh3/=sqrt(val1*val1+val2*val2+val3*val3);
-
-            ////msg_info() << Nh1;
-            //// ---------------------------------------------------------
-            //// The three isochoric simple shear modes along e1, e2, and e3
-            //// defined in Equation 4.19, Equation 4.20, and Equation 4.21, respectively (p35)
-            //Mat3x3 Ns1=(dyad(v2,n)+dyad(n,v2))/sqrt(2.0f);
-            //Mat3x3 Ns2=(dyad(v1,n)+dyad(n,v1))/sqrt(2.0f);
-            //Mat3x3 Ns3=(dyad(v1,v2)+dyad(v2,v1))/sqrt(2.0f);
-
-            //std::vector<Mat3x3> tmp_anisotropyMatrixArray;
-            //tmp_anisotropyMatrixArray.push_back(Nh1);
-            //tmp_anisotropyMatrixArray.push_back(Nh2);
-            //tmp_anisotropyMatrixArray.push_back(Nh3);
-            //tmp_anisotropyMatrixArray.push_back(Ns3);
-            //tmp_anisotropyMatrixArray.push_back(Ns1);
-            //tmp_anisotropyMatrixArray.push_back(Ns2);
+            Eigen::Matrix3d m(3,3);
+            m << c11, c12, c13,
+                 c12, c22, c23,
+                 c13, c23, c33;
+            Eigen::EigenSolver<Eigen::Matrix3d> eigensolver(m);
+            if (eigensolver.info() != Eigen::Success) abort();
+            const Eigen::EigenSolver<Eigen::Matrix3d>::EigenvalueType test = eigensolver.eigenvalues();
+            Eigen::Vector3d test1 = test.real();
+            Real _lambda1 = test1(0);
+            Real _lambda2 = test1(1);
+            Real _lambda3 = test1(2);
+            Real _lambda4 = 2*c44;
+            Real _lambda5 = 2*c55;
+            Real _lambda6 = 2*c66;
 
 
-            helper::vector<Mat3x3> tmp_anisotropyMatrixArray;
-            helper::vector<Real> tmp_anisotropyScalarArray;
+            Mat3x3 N1_orth = matrixZ(_lambda1,_lambda2,_lambda3,m) * matrixD(_lambda1,v1,v2,n,m);
+            //# N1_orth *= np.linalg.norm( N1_orth)
+            N1_orth /= sqrt(pow(N1_orth[0][0],2)+pow(N1_orth[1][1],2)+pow(N1_orth[2][2],2));
+
+            Mat3x3 N2_orth = matrixZ(_lambda2,_lambda3,_lambda1,m) * matrixD(_lambda2,v1,v2,n,m);
+            //# N2_orth *= np.linalg.norm( N2_orth)
+            N2_orth /= sqrt(pow(N2_orth[0][0],2)+pow(N2_orth[1][1],2)+pow(N2_orth[2][2],2));
+
+            Mat3x3 N3_orth = matrixZ(_lambda3,_lambda1,_lambda2,m) * matrixD(_lambda3,v1,v2,n,m);
+            //# N3_orth *= np.linalg.norm( N3_orth)
+            N3_orth /= sqrt(pow(N3_orth[0][0],2)+pow(N3_orth[1][1],2)+pow(N3_orth[2][2],2));
+
+            Mat3x3 N1_s = 1 / sqrt(2) * (dyad(v2,n) + dyad(n,v2));
+            Mat3x3 N2_s = 1 / sqrt(2) * (dyad(n,v1) + dyad(v1,n));
+            Mat3x3 N3_s = 1 / sqrt(2) * (dyad(v1,v2) + dyad(v2,v1));
+
+
+            std::vector<Mat3x3> tmp_anisotropyMatrixArray;
+            std::vector<Real> tmp_anisotropyScalarArray;
 
 
             // push all symmetric matrices and the eigenvalues
-            tmp_anisotropyMatrixArray.push_back(d_ortho_matrix.getValue()[0]);
-            tmp_anisotropyMatrixArray.push_back(d_ortho_matrix.getValue()[1]);
-            tmp_anisotropyMatrixArray.push_back(d_ortho_matrix.getValue()[2]);
-            tmp_anisotropyMatrixArray.push_back(d_ortho_matrix.getValue()[3]);
-            tmp_anisotropyMatrixArray.push_back(d_ortho_matrix.getValue()[4]);
-            tmp_anisotropyMatrixArray.push_back(d_ortho_matrix.getValue()[5]);
-    
-            tmp_anisotropyScalarArray.push_back(d_ortho_scalar.getValue()[0]);
-            tmp_anisotropyScalarArray.push_back(d_ortho_scalar.getValue()[1]);
-            tmp_anisotropyScalarArray.push_back(d_ortho_scalar.getValue()[2]);
-            tmp_anisotropyScalarArray.push_back(d_ortho_scalar.getValue()[3]);
-            tmp_anisotropyScalarArray.push_back(d_ortho_scalar.getValue()[4]);
-            tmp_anisotropyScalarArray.push_back(d_ortho_scalar.getValue()[5]);
-
+            tmp_anisotropyMatrixArray.push_back(N1_orth);
+            tmp_anisotropyScalarArray.push_back(_lambda1);
+            tmp_anisotropyMatrixArray.push_back(N2_orth);
+            tmp_anisotropyScalarArray.push_back(_lambda2);
+            tmp_anisotropyMatrixArray.push_back(N3_orth);
+            tmp_anisotropyScalarArray.push_back(_lambda3);
+            tmp_anisotropyMatrixArray.push_back(N3_s);
+            tmp_anisotropyScalarArray.push_back(_lambda4);
+            tmp_anisotropyMatrixArray.push_back(N1_s);
+            tmp_anisotropyScalarArray.push_back(_lambda5);
+            tmp_anisotropyMatrixArray.push_back(N2_s);
+            tmp_anisotropyScalarArray.push_back(_lambda6);
 
             vecAnisotropyMatrixArray.push_back(tmp_anisotropyMatrixArray);
-            vecAnisotropyScalarArray.push_back(d_ortho_scalar.getValue());
-            //msg_warning() << "orthotropic elasticitySymmetry is not yet implemented";
+            vecAnisotropyScalarArray.push_back(tmp_anisotropyScalarArray);
+            //msg_info() << "C11      "<< c11;
+            //msg_info() << "C22      "<< c22;
+            //msg_info() << "C33      "<< c33;
+            //msg_info() << "C44      "<< c44;
+            //msg_info() << "C55      "<< c55;
+            //msg_info() << "C66      "<< c66;
+            //msg_info() << "C12      "<< c12;
+            //msg_info() << "C13      "<< c13;
+            //msg_info() << "C23      "<< c23;
         }
     }
 }
+
 
 template<class DataTypes>
 void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedronStiffnessEdgeMatrixForElts(size_t eltIndex,const Coord point[4], Mat6x9 edgeStiffnessVectorized[2])
@@ -1828,6 +1892,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
             for(i=0;i<vecAnisotropyScalarArray[eltIndex].size();++i) {
                 edgeStiffness[j]+=(vecAnisotropyScalarArray[eltIndex][i]*vecAnisotropyMatrixArray[eltIndex][i]*tmp*vecAnisotropyMatrixArray[eltIndex][i])*fabs(volume)/6;
             }
+            //msg_info() << edgeStiffness[j];
         }
 
         //int array[] = {0,20,60,100};
@@ -2469,17 +2534,150 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::updateLameCoeffic
 template<class DataTypes>
 void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::draw(const core::visual::VisualParams* vparams)
 {
+
 #ifndef SOFA_NO_OPENGL
-    if (!vparams->displayFlags().getShowForceFields()) return;
-    if (!this->mstate) return;
+    test_visu = 1;
+    if(test_visu == 0){
+        if (!vparams->displayFlags().getShowForceFields()) return;
+        if (!this->mstate) return;
 
-    if (vparams->displayFlags().getShowWireFrame())
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        if (vparams->displayFlags().getShowWireFrame())
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
-    if (vparams->displayFlags().getShowWireFrame())
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        if (vparams->displayFlags().getShowWireFrame())
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+    else
+    {
+        if(this->m_componentstate == ComponentState::Invalid) return ;
+        if (!vparams->displayFlags().getShowForceFields()) return;
+
+        const helper::vector<TetrahedronRestInformation>& tetrahedronInf = tetrahedronInfo.getValue();
+
+        const VecCoord& x = this->mstate->read(core::ConstVecCoordId::position())->getValue();
+
+        size_t i;
+        size_t nbTetrahedra=_topology->getNbTetrahedra();
+
+        Real young_1, young_2,anisotropyType;
+        float transparency = d_transparency.getValue();
+        for(i=0; i<nbTetrahedra; i++ )
+        {
+
+            anisotropyType = d_anisotropyParameter.getValue()[i][0];
+
+
+            const HighOrderTetrahedronSetTopologyContainer::VecPointID &indexArray=
+                highOrderTetraGeo->getTopologyContainer()->getGlobalIndexArrayOfControlPoints(i);
+            std::vector< defaulttype::Vector3 > points[4];
+
+            //nbControlPoints=indexArray.size();
+            //assert(stiffnessArray.size()==nbControlPoints*(nbControlPoints-1)/2);
+            //// loop over each entry in the stiffness vector of size nbControlPoints*(nbControlPoints+1)/2
+            //for (rank=0,j=0; j<nbControlPoints; ++j) {
+
+            Index a = indexArray[0];
+            Index b = indexArray[1];
+            Index c = indexArray[2];
+            Index d = indexArray[3];
+            Coord center = (x[a]+x[b]+x[c]+x[d])*0.125;
+            Coord pa = (x[a]+center)*(Real)0.666667;
+            Coord pb = (x[b]+center)*(Real)0.666667;
+            Coord pc = (x[c]+center)*(Real)0.666667;
+            Coord pd = (x[d]+center)*(Real)0.666667;
+
+            points[0].push_back(pa);
+            points[0].push_back(pb);
+            points[0].push_back(pc);
+
+            points[1].push_back(pb);
+            points[1].push_back(pc);
+            points[1].push_back(pd);
+
+            points[2].push_back(pc);
+            points[2].push_back(pd);
+            points[2].push_back(pa);
+
+            points[3].push_back(pd);
+            points[3].push_back(pa);
+            points[3].push_back(pb);
+
+            if(d_drawDirection.getValue() && anisotropyType != 4)
+            {
+                Coord n = d_anisotropyDirection.getValue()[i];
+                n/=n.norm();
+
+                //Real col = atan2(n[2],n[0]);
+                //float fac = 0.0; //col * 0.5f;
+
+                //helper::ColorMap colorMap;
+                //helper::ColorMap::evaluator<Real> evalColor = colorMap.getEvaluator(-M_PI,M_PI); //(0.0, 1.0);
+                //defaulttype::Vec<4,float> color = evalColor(col);
+                //color[3] = transparency;
+
+                //vparams->drawTool()->drawTriangles(points[0],color);
+                //vparams->drawTool()->drawTriangles(points[1],color);
+                //vparams->drawTool()->drawTriangles(points[2],color);
+                //vparams->drawTool()->drawTriangles(points[3],color);
+
+                Coord tetraBarycenter = (x[a] + x[b] + x[c] + x[d]) / 4;
+                Coord edge;
+                Real tetraEdgeLenght;
+                edge = x[a] - x[b];
+                tetraEdgeLenght += sqrt(pow(edge[0], 2) + pow(edge[1], 2) + pow(edge[2], 2));
+                edge = x[a] - x[c];
+                tetraEdgeLenght += sqrt(pow(edge[0], 2) + pow(edge[1], 2) + pow(edge[2], 2));
+                edge = x[a] - x[d];
+                tetraEdgeLenght += sqrt(pow(edge[0], 2) + pow(edge[1], 2) + pow(edge[2], 2));
+                edge = x[b] - x[c];
+                tetraEdgeLenght += sqrt(pow(edge[0], 2) + pow(edge[1], 2) + pow(edge[2], 2));
+                edge = x[b] - x[d];
+                tetraEdgeLenght += sqrt(pow(edge[0], 2) + pow(edge[1], 2) + pow(edge[2], 2));
+                edge = x[c] - x[c];
+                tetraEdgeLenght += sqrt(pow(edge[0], 2) + pow(edge[1], 2) + pow(edge[2], 2));
+
+                tetraEdgeLenght /= 6;
+                Real tetraInsphere =  tetraEdgeLenght / sqrt(24);
+                n *= tetraInsphere ;
+                vparams->drawTool()->drawLine(tetraBarycenter-n,tetraBarycenter+n, defaulttype::Vec<4,float>(1.0,1.0,1.0,1.0));
+            }
+            if (d_drawHeterogeneousTetra.getValue() && anisotropyType != 4) {
+
+                young_1 = d_youngModulus.getValue()[i];
+                young_2 = d_anisotropyParameter.getValue()[i][1];
+                if(young_1 - young_2 != 0)
+                {
+                    float col = (float)(abs(young_1 - young_2)/(young_1 + young_2));
+                    //msg_warning() << col;
+                    float fac = col * 0.5f;
+                    defaulttype::Vec<4,float> color1 = defaulttype::Vec<4,float>(col      , 0.0f - fac , 1.0f-col,transparency);
+                    defaulttype::Vec<4,float> color2 = defaulttype::Vec<4,float>(col      , 0.5f - fac , 1.0f-col,transparency);
+                    defaulttype::Vec<4,float> color3 = defaulttype::Vec<4,float>(col      , 1.0f - fac , 1.0f-col,transparency);
+                    defaulttype::Vec<4,float> color4 = defaulttype::Vec<4,float>(col+0.5f , 1.0f - fac , 1.0f-col,transparency);
+
+                    vparams->drawTool()->drawTriangles(points[0],color2 );
+                    vparams->drawTool()->drawTriangles(points[1],color2 );
+                    vparams->drawTool()->drawTriangles(points[2],color2 );
+                    vparams->drawTool()->drawTriangles(points[3],color2 );
+                }
+            }
+            else if (anisotropyType == 4)
+            {
+                //msg_warning() << d_youngModulus.getValue()[i] << "  " << d_anisotropyParameter.getValue()[i][1];
+
+                vparams->drawTool()->drawTriangles(points[0], defaulttype::Vec<4,float>(0.0,0.0,1.0,1.0));
+                vparams->drawTool()->drawTriangles(points[1], defaulttype::Vec<4,float>(0.0,0.5,1.0,1.0));
+                vparams->drawTool()->drawTriangles(points[2], defaulttype::Vec<4,float>(0.0,1.0,1.0,1.0));
+                vparams->drawTool()->drawTriangles(points[3], defaulttype::Vec<4,float>(0.5,1.0,1.0,1.0));
+            }
+            for(unsigned int i=0 ; i<4 ; i++) points[i].clear();
+
+
+        }
+    }
 #endif /* SOFA_NO_OPENGL */
+
 }
 
 } // namespace forcefield

@@ -1,7 +1,5 @@
-
-
 #include "HighOrderTetrahedronSetTopologyContainer.h"
-#include <sofa/core/visual/VisualParams.h>
+//#include <sofa/core/visual/VisualParams.h>
 #include <sofa/core/ObjectFactory.h>
  
 

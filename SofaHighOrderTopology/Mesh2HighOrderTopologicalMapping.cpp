@@ -2,7 +2,7 @@
 #include "Mesh2HighOrderTopologicalMapping.h"
 #include "HighOrderTetrahedronSetTopologyContainer.h"
 #include "HighOrderTriangleSetTopologyContainer.h"
-#include <sofa/core/visual/VisualParams.h>
+//#include <sofa/core/visual/VisualParams.h>
 
 #include <sofa/core/ObjectFactory.h>
 

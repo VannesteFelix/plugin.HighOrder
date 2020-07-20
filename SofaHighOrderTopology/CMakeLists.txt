@@ -64,7 +64,7 @@ set(README_FILE "SofaHighOrderTopology.txt" )
 set(SOFAHIGHORDERTOPOLOGY_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-DSOFA_BUILD_SOFAHIGHORDERTOPOLOGY")
-target_link_libraries(${PROJECT_NAME} SofaComponentBase SofaBaseTopology SofaUserInteraction SofaMiscForceField)
+target_link_libraries(${PROJECT_NAME} SofaBase SofaBaseTopology SofaUserInteraction SofaMiscForceField)
 
 target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>")
