@@ -1,7 +1,9 @@
 #ifndef SOFA_HIGHORDERTOPOLOGY_BEZIERTETRA2BEZIERTRIANGLETOPOLOGICALMAPPING_H
 #define SOFA_HIGHORDERTOPOLOGY_BEZIERTETRA2BEZIERTRIANGLETOPOLOGICALMAPPING_H
 
+#include <initHighOrderTopology.h>
 #include <sofa/core/topology/TopologicalMapping.h>
+#include <SofaBaseTopology/TriangleSetTopologyModifier.h>
 
 #include <sofa/defaulttype/Vec.h>
 #include <map>
@@ -42,6 +44,9 @@ public:
 	typedef sofa::core::topology::BaseMeshTopology::SeqTriangles SeqTriangles;
 	typedef sofa::core::topology::BaseMeshTopology::TrianglesInTetrahedron TrianglesInTetrahedron;
 	typedef sofa::core::topology::BaseMeshTopology::TetrahedraAroundTriangle TetrahedraAroundTriangle;
+
+    friend class sofa::component::topology::TriangleSetTopologyModifier;
+
 protected:
     /** \brief Constructor.
      *

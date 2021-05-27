@@ -23,6 +23,8 @@
 #include <SofaBaseTopology/HexahedronSetGeometryAlgorithms.h>
 #include <sofa/helper/rmath.h>
 #include <sofa/helper/system/thread/CTime.h>
+#include <sofa/core/behavior/MultiMatrixAccessor.h>
+#include <sofa/core/MechanicalParams.h>
 
 #ifdef SOFA_SUPPORT_MOVING_FRAMES
 #include <sofa/core/behavior/InertiaForce.h>
@@ -1228,7 +1230,7 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::init()
 
     // add the functions to handle topology changes for Vertex informations
     vertexMassHandler = new VertexMassHandler(this, &vertexMassInfo);
-    vertexMassInfo.createTopologicalEngine(_topology, vertexMassHandler);
+    vertexMassInfo.createTopologyHandler(_topology, vertexMassHandler);
 	if (edgeGeo)
 		vertexMassInfo.linkToEdgeDataArray();
 	if (triangleGeo)
@@ -1243,7 +1245,7 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::init()
 
     // add the functions to handle topology changes for Edge informations
     edgeMassHandler = new EdgeMassHandler(this, &edgeMassInfo);
-    edgeMassInfo.createTopologicalEngine(_topology, edgeMassHandler);
+    edgeMassInfo.createTopologyHandler(_topology, edgeMassHandler);
 	if (edgeGeo)
 		edgeMassInfo.linkToEdgeDataArray();
 	if (triangleGeo)
@@ -1260,7 +1262,7 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::init()
 	if (highOrderTetraGeo) {
 		// for Bezier Tetrahedra add the functions to handle topology changes for Tetrahedron informations
 		tetrahedronMassHandler = new TetrahedronMassHandler(this, &tetrahedronMassInfo);
-		tetrahedronMassInfo.createTopologicalEngine(_topology, tetrahedronMassHandler);
+        tetrahedronMassInfo.createTopologyHandler(_topology, tetrahedronMassHandler);
 		tetrahedronMassInfo.linkToTetrahedronDataArray();
 		topology::TetrahedronIndexVector tbi1,tbi2;
 		Real density=m_massDensity.getValue();
@@ -1492,7 +1494,7 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::init()
 	if (highOrderTrianGeo) {
 		// for Bezier triangles add the functions to handle topology changes for triangle informations
 		triangleMassHandler = new TriangleMassHandler(this, &triangleMassInfo);
-		triangleMassInfo.createTopologicalEngine(_topology, triangleMassHandler);
+        triangleMassInfo.createTopologyHandler(_topology, triangleMassHandler);
 		triangleMassInfo.linkToTriangleDataArray();
 		topology::TriangleIndexVector tbi1,tbi2;
 		bool lumping=this->lumping.getValue();
@@ -2306,7 +2308,7 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::addMToMatrix(const core::Mech
     AddMToMatrixFunctor<Deriv,MassType> calc;
     sofa::core::behavior::MultiMatrixAccessor::MatrixRef r = matrix->getMatrix(this->mstate);
     sofa::defaulttype::BaseMatrix* mat = r.matrix;
-    Real mFactor = (Real)mparams->mFactorIncludingRayleighDamping(this->rayleighMass.getValue());
+    Real mFactor = (Real)sofa::core::mechanicalparams::mFactorIncludingRayleighDamping(mparams, this->rayleighMass.getValue());
 
     if((int)mat->colSize() != (_topology->getNbPoints()*N) || (int)mat->rowSize() != (_topology->getNbPoints()*N))
     {

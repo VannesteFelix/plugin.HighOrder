@@ -1,6 +1,6 @@
 #define SOFA_HIGHORDERTOPOLOGY_LAGRANGETETRAHEDRONSETGEOMETRYALGORITHMS_CPP
 #include "LagrangeTetrahedronSetGeometryAlgorithms.inl"
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/core/ObjectFactory.h>
 #include "initHighOrderTopology.h"
 namespace sofa

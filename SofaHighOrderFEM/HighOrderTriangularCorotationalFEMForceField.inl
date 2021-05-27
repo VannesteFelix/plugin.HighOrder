@@ -251,8 +251,8 @@ void HighOrderTriangularCorotationalFEMForceField<DataTypes>::FTCFTriangleHandle
 							Jacobian[j][k]=point[j][k]-point[2][k];
 						}
 					}
-					invertMatrix(inverseJacobian,Jacobian);
-					Real jac=fabs(determinant(Jacobian))*ff->numericalIntegrationStiffnessDataArray[i].integrationWeight;
+                    defaulttype::invertMatrix(inverseJacobian,Jacobian);
+                    Real jac=fabs(defaulttype::determinant(Jacobian))*ff->numericalIntegrationStiffnessDataArray[i].integrationWeight;
 					helper::system::thread::ctime_t startUpdateMat=helper::system::thread::CTime::getTime();
 					helper::vector<Mat3x2> SDArray;
 					for (j=0;j<nbControlPoints;j++) {
@@ -634,7 +634,7 @@ template <class DataTypes> void HighOrderTriangularCorotationalFEMForceField<Dat
 				size_t rank;
 				for(rank=0,j=0;j<tbiArray.size();++j) {
 					for(k=j+1;k<tbiArray.size();++k,++rank) {
-						coeffMatrix=dyad(shapeFunctionDerivativeArray[j],shapeFunctionDerivativeArray[k])*2*weight;
+                        coeffMatrix=defaulttype::dyad(shapeFunctionDerivativeArray[j],shapeFunctionDerivativeArray[k])*2*weight;
 						for(l=0; l<3; ++l){
 							for(m=0; m<3; ++m){
 								if (l!=m) {
@@ -851,7 +851,7 @@ template <class DataTypes> void HighOrderTriangularCorotationalFEMForceField<Dat
 		d_assemblyTime.setValue(((endAssembly-startAssembly)/(Real)helper::system::thread::CTime::getRefTicksPerSec()));
 	}
     /// set the call back function upon creation of a triangle
-    triangleInfo.createTopologicalEngine(_topology,triangleHandler);
+    triangleInfo.createTopologyHandler(_topology,triangleHandler);
     triangleInfo.registerTopologicalData();
     triangleInfo.endEdit();
 
@@ -1084,7 +1084,7 @@ void HighOrderTriangularCorotationalFEMForceField<DataTypes>::computeTriangleSti
 			k=edgesInTriangleArray[j][0];
 			l=edgesInTriangleArray[j][1];
 			// the linear stiffness matrix using shape vectors and Lame coefficients
-			Mat2x2 tmp=dyad(shapeVector[l],shapeVector[k]);
+            Mat2x2 tmp=defaulttype::dyad(shapeVector[l],shapeVector[k]);
 			for(i=0;i<anisotropyScalarArray.size();++i) {
 				edgeStiffness[j]+=anisotropyScalarArray[i]*anisotropyMatrixArray[j]*tmp*anisotropyMatrixArray[j];
 			}

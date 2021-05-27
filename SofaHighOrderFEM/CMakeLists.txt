@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8)
-project(SofaHighOrderFEM)
+cmake_minimum_required(VERSION 3.1)
+project(SofaHighOrderFEM VERSION 1.0)
 
 set(SOFAHIGHORDERFEM_MAJOR_VERSION 0)
 set(SOFAHIGHORDERFEM_MINOR_VERSION 2)
@@ -37,14 +37,23 @@ set(README_FILE "SofaHighOrderFEM.txt" )
 set(SOFAHIGHORDERFEM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-DSOFA_BUILD_SOFAHIGHORDERFEM")
-target_link_libraries(${PROJECT_NAME} SofaHighOrderTopology SofaBase SofaBaseTopology SofaUserInteraction SofaMiscForceField)
+target_link_libraries(${PROJECT_NAME} SofaHighOrderTopology SofaBase SofaBaseTopology SofaUserInteraction SofaMiscForceField Sofa.GL)
 
 target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>")
 target_include_directories(${PROJECT_NAME} PUBLIC "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 
 
-sofa_create_package(SofaHighOrderFEM ${SOFAHIGHORDERFEM_VERSION} SofaHighOrderFEM SofaHighOrderFEM)
+## Install rules for the library and headers; CMake package configurations files
+sofa_create_package_with_targets(
+    PACKAGE_NAME ${PROJECT_NAME}
+    PACKAGE_VERSION ${PROJECT_VERSION}
+    TARGETS ${PROJECT_NAME} AUTO_SET_TARGET_PROPERTIES
+    INCLUDE_SOURCE_DIR ${PROJECT_NAME}
+    INCLUDE_INSTALL_DIR ${PROJECT_NAME}
+    RELOCATABLE "plugins"
+    )
+
 #
 # Organize projects into sofa-asclepios Visual Studio folders
 #

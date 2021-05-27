@@ -15,6 +15,7 @@
 #include <SofaBaseTopology/TopologyData.h>
 #include <sofa/defaulttype/MatSym.h>
 #include <sofa/helper/system/thread/CTime.h>
+#include <sofa/defaulttype/SolidTypes.h>
 
 namespace sofa
 {
@@ -55,6 +56,7 @@ public:
 	typedef sofa::core::topology::Topology::Triangle Triangle;
 	typedef sofa::core::topology::Topology::Edge Edge;
 	typedef sofa::core::topology::Topology::Quad Quad;
+    typedef helper::Quater<Real> Rot;
 	typedef sofa::core::topology::Topology::Hexahedron Hexahedron;
 	typedef sofa::core::topology::BaseMeshTopology::EdgesInTriangle EdgesInTriangle;
 	typedef sofa::core::topology::BaseMeshTopology::EdgesInTetrahedron EdgesInTetrahedron;
@@ -88,13 +90,15 @@ public:
     // In case of non 3D template
     typedef Vec<3,Real> Vec3;
     typedef Vec<4,Real> Vec4;
+    typedef Vec<5,Real> Vec5;
     typedef Vec<6,Real> Vec6;
     typedef Vec<9,Real> Vec9;
-    typedef Vec<10,Real> Vec10;    
+    typedef Vec<10,Real> Vec10;
     typedef Vec<16, Real> Vec16;
     typedef Vec<16, int> Vec16Int;
     typedef StdVectorTypes< Vec3, Vec3, Real >     GeometricalTypes ; /// assumes the geometry object type is 3D
-	typedef typename sofa::component::topology::HighOrderTetrahedronSetGeometryAlgorithms<GeometricalTypes>::VecPointID VecPointID;
+    typedef typename sofa::component::topology::HighOrderTetrahedronSetGeometryAlgorithms<GeometricalTypes>::VecPointID VecPointID;
+    typedef typename defaulttype::SolidTypes<Real>::Transform       Transform;
 
     typedef Vec4 ParameterArray;
     // typedef Vec10 ParameterArray;
@@ -234,6 +238,8 @@ protected:
         void applyCreateFunction(unsigned int, TetrahedronRestInformation &t, const Tetrahedron
                 &, const sofa::helper::vector<unsigned int> &, const sofa::helper::vector<double> &);
 
+        void updateStiffnessVector(unsigned int tetrahedronIndex,TetrahedronRestInformation &my_tinfo);
+        void interpolateBewteenControlPoints(unsigned int interpolateBewteenControlPoints,TetrahedronRestInformation &my_tinfo);
     protected:
         HighOrderTetrahedralCorotationalFEMForceField<DataTypes>* ff;
 
@@ -287,7 +293,7 @@ public:
     Data<AnisotropyDirectionArray> d_anisotropyDirection; // the directions of anisotropy
     Data<helper::vector<helper::vector<Mat3x3>>> d_ortho_matrix;
     Data<helper::vector<helper::vector<Real>>> d_ortho_scalar;
-
+    Data<helper::vector<Vec5>> d_controlPoints;
 //    Data<Real> d_poissonRatio; // stiffness coefficient for isotropic elasticity;
 //    Data<Real> d_youngModulus;
 
@@ -313,8 +319,11 @@ public:
     Data< Real > d_transparency;
     Data< bool > test_visu;
 
+    Real m_yaw;
+    Real m_roll;
 
-    virtual void init();
+    void init() override;
+    void reinit() override;
 
 
     virtual void addForce(const sofa::core::MechanicalParams* /*mparams*/ /* PARAMS FIRST */, DataVecDeriv &  dataF, const DataVecCoord &  dataX , const DataVecDeriv & dataV ) ;
@@ -329,14 +338,7 @@ public:
     virtual Real getLambda() const { return lambda;}
     virtual Real getMu() const { return mu;}
 
-//    void setYoungModulus(const double modulus)
-//    {
-//        d_youngModulus.setValue((Real)modulus);
-//    }
-//    void setPoissonRatio(const double ratio)
-//    {
-//        d_poissonRatio.setValue((Real)ratio);
-//    }
+
     void setRotationDecompositionMethod( const RotationDecompositionMethod m)
     {
         decompositionMethod=m;
@@ -351,6 +353,9 @@ public:
 
     /////////////// TEST ////////////////////////
     void computeTetrahedronStiffnessEdgeMatrixForElts(size_t eltIndex,const Coord point[4], Mat6x9 edgeStiffnessVectorized[2]);
+    void updateStiffnessVector();
+    void updateStiffnessVectorWithCP();
+    void interpolateBewteenControlPoints();
     /////////////////////////////////////////////
 
 	friend class FTCFTetrahedronHandler;
@@ -367,8 +372,7 @@ protected :
 
 	virtual const helper::vector<Mat3x3> &getRotatedStiffnessArray(const size_t i,
 		const TetrahedronRestInformation *restTetra);
-	// update anisotropyMatrixArray and anisotropyScalarArray based on input data
-	void assembleAnisotropicTensors();
+
 	// compute elasticity tensor for isotropic and anisotropic cases
     void computeElasticityTensor();
 

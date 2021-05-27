@@ -165,68 +165,68 @@ public :
     /// @}
 
 
-    inline friend std::ostream& operator<< (std::ostream& out, const HighOrderTetrahedronSetTopologyContainer& t)
-    {
-        helper::ReadAccessor< Data< sofa::helper::vector<Tetrahedron> > > m_tetrahedron = t.d_tetrahedron;
-        out  << m_tetrahedron<< " "
-                << t.m_edgesInTetrahedron<< " "
-                << t.m_trianglesInTetrahedron;
+//    inline friend std::ostream& operator<< (std::ostream& out, const HighOrderTetrahedronSetTopologyContainer& t)
+//    {
+//        helper::ReadAccessor< Data< sofa::helper::vector<Tetrahedron> > > m_tetrahedron = t.d_tetrahedron;
+//        out  << m_tetrahedron<< " "
+//                << t.m_edgesInTetrahedron<< " "
+//                << t.m_trianglesInTetrahedron;
 
-        out << " "<< t.m_tetrahedraAroundVertex.size();
-        for (unsigned int i=0; i<t.m_tetrahedraAroundVertex.size(); i++)
-        {
-            out << " " << t.m_tetrahedraAroundVertex[i];
-        }
-        out <<" "<< t.m_tetrahedraAroundEdge.size();
-        for (unsigned int i=0; i<t.m_tetrahedraAroundEdge.size(); i++)
-        {
-            out << " " << t.m_tetrahedraAroundEdge[i];
-        }
-        out <<" "<< t.m_tetrahedraAroundTriangle.size();
-        for (unsigned int i=0; i<t.m_tetrahedraAroundTriangle.size(); i++)
-        {
-            out << " " << t.m_tetrahedraAroundTriangle[i];
-        }
-		out << " " << t.d_degree.getValue();
-		out << " " << t.getNbPoints();
-        return out;
-    }
+//        out << " "<< t.m_tetrahedraAroundVertex.size();
+//        for (unsigned int i=0; i<t.m_tetrahedraAroundVertex.size(); i++)
+//        {
+//            out << " " << t.m_tetrahedraAroundVertex[i];
+//        }
+//        out <<" "<< t.m_tetrahedraAroundEdge.size();
+//        for (unsigned int i=0; i<t.m_tetrahedraAroundEdge.size(); i++)
+//        {
+//            out << " " << t.m_tetrahedraAroundEdge[i];
+//        }
+//        out <<" "<< t.m_tetrahedraAroundTriangle.size();
+//        for (unsigned int i=0; i<t.m_tetrahedraAroundTriangle.size(); i++)
+//        {
+//            out << " " << t.m_tetrahedraAroundTriangle[i];
+//        }
+//		out << " " << t.d_degree.getValue();
+//		out << " " << t.getNbPoints();
+//        return out;
+//    }
 
-    inline friend std::istream& operator>>(std::istream& in, HighOrderTetrahedronSetTopologyContainer& t)
-    {
-        unsigned int s=0;
-        sofa::helper::vector< unsigned int > value;
-        helper::WriteAccessor< Data< sofa::helper::vector<Tetrahedron> > > m_tetrahedron = t.d_tetrahedron;
+//    inline friend std::istream& operator>>(std::istream& in, HighOrderTetrahedronSetTopologyContainer& t)
+//    {
+//        unsigned int s=0;
+//        sofa::helper::vector< unsigned int > value;
+//        helper::WriteAccessor< Data< sofa::helper::vector<Tetrahedron> > > m_tetrahedron = t.d_tetrahedron;
 
-        in >> m_tetrahedron >> t.m_edgesInTetrahedron >> t.m_trianglesInTetrahedron;
+//        in >> m_tetrahedron >> t.m_edgesInTetrahedron >> t.m_trianglesInTetrahedron;
 
 
-        in >> s;
-        for (unsigned int i=0; i<s; i++)
-        {
-            in >> value;
-            t.m_tetrahedraAroundVertex.push_back(value);
-        }
-        in >> s;
-        for (unsigned int i=0; i<s; i++)
-        {
-            in >> value;
-            t.m_tetrahedraAroundEdge.push_back(value);
-        }
-        in >> s;
-        for (unsigned int i=0; i<s; i++)
-        {
-            in >> value;
-            t.m_tetrahedraAroundTriangle.push_back(value);
-        }
-        HighOrderDegreeType bdt=0;
-		in >> bdt;
-		t.d_degree.setValue(bdt);
-		int nbp;
-		in >> nbp;
-		t.setNbPoints(nbp);
-        return in;
-    }
+//        in >> s;
+//        for (unsigned int i=0; i<s; i++)
+//        {
+//            in >> value;
+//            t.m_tetrahedraAroundVertex.push_back(value);
+//        }
+//        in >> s;
+//        for (unsigned int i=0; i<s; i++)
+//        {
+//            in >> value;
+//            t.m_tetrahedraAroundEdge.push_back(value);
+//        }
+//        in >> s;
+//        for (unsigned int i=0; i<s; i++)
+//        {
+//            in >> value;
+//            t.m_tetrahedraAroundTriangle.push_back(value);
+//        }
+//        HighOrderDegreeType bdt=0;
+//		in >> bdt;
+//		t.d_degree.setValue(bdt);
+//		int nbp;
+//		in >> nbp;
+//		t.setNbPoints(nbp);
+//        return in;
+//    }
 protected:
 	/// array describing the global  index of the DOFs used in weightedDOFArray
 	SeqDOFInHighOrderTetrahedron  tetrahedronDOFArray;

@@ -1,7 +1,7 @@
 
 #define SOFA_HIGHORDERTOPOLOGY_BEZIERTETRAHEDRONSETGEOMETRYALGORITHMS_CPP
 #include "BezierTetrahedronSetGeometryAlgorithms.inl"
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include <sofa/core/ObjectFactory.h>
 #include "initHighOrderTopology.h"
 namespace sofa

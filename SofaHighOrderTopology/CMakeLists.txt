@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8)
-project(SofaHighOrderTopology)
+cmake_minimum_required(VERSION 3.1)
+project(SofaHighOrderTopology VERSION 1.0)
 
 find_package(SofaBase)
 
@@ -33,7 +33,7 @@ set(HEADER_FILES
 	LagrangeTriangleSetGeometryAlgorithms.h
 	LagrangeTriangleSetGeometryAlgorithms.inl
 	HighOrderTopologyIndex.h
-	MeshHOMFLoader.h
+        # MeshHOMFLoader.h
 	HOMFFileExporter.h
 	HOMFFileExporter.inl
 	)
@@ -52,7 +52,7 @@ set(SOURCE_FILES
 	BezierTetrahedronSetGeometryAlgorithms.cpp
 	LagrangeTetrahedronSetGeometryAlgorithms.cpp
 	LagrangeTriangleSetGeometryAlgorithms.cpp
-	MeshHOMFLoader.cpp
+        # MeshHOMFLoader.cpp
 	HOMFFileExporter.cpp
 	)
 
@@ -71,9 +71,19 @@ target_include_directories(${PROJECT_NAME} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CUR
 target_include_directories(${PROJECT_NAME} PUBLIC "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>")
 
 
+## Install rules for the library and headers; CMake package configurations files
+sofa_create_package_with_targets(
+    PACKAGE_NAME ${PROJECT_NAME}
+    PACKAGE_VERSION ${PROJECT_VERSION}
+    TARGETS ${PROJECT_NAME} AUTO_SET_TARGET_PROPERTIES
+    INCLUDE_SOURCE_DIR ${PROJECT_NAME}
+    INCLUDE_INSTALL_DIR ${PROJECT_NAME}
+    RELOCATABLE "plugins"
+    )
+
+
 set(SOFAHIGHORDERTOPOLOGY_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}) 
 
-sofa_create_package(SofaHighOrderTopology ${SOFAHIGHORDERTOPOLOGY_VERSION} SofaHighOrderTopology SofaHighOrderTopology)
 #
 # Organize projects into sofa-asclepios Visual Studio folders
 #

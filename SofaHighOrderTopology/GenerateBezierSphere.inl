@@ -268,7 +268,8 @@ void GenerateBezierSphere<DataTypes>::doUpdate()
 		Real w,phi;
 		Coord normal;
 		for (i=0;i<edgeArray.size();++i) {
-			normal=defaulttype::cross<Real>(posTrian[edgeArray[i][0]],posTrian[edgeArray[i][1]]);
+            //normal=defaulttype::cross<Real>(posTrian[edgeArray[i][0]],posTrian[edgeArray[i][1]]);
+            normal=defaulttype::cross(posTrian[edgeArray[i][0]],posTrian[edgeArray[i][1]]);
 			normal=defaulttype::cross(normal,posTrian[edgeArray[i][0]]);
 			normal/= normal.norm();
 			phi=acos(dot(posTrian[edgeArray[i][0]],posTrian[edgeArray[i][1]]));

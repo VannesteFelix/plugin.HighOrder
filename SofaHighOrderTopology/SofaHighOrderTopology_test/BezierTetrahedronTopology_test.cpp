@@ -273,24 +273,24 @@ struct BezierTetrahedronTopology_test : public Sofa_test<typename _DataTypes::Re
 
 }; 
 
-// Define the list of DataTypes to instanciate
-using testing::Types;
-typedef Types<
-    Vec3Types
-> DataTypes; // the types to instanciate.
+//// Define the list of DataTypes to instanciate
+//using testing::Types;
+//typedef Types<
+//    Vec3Types
+//> DataTypes; // the types to instanciate.
 
-// Test suite for all the instanciations
-TYPED_TEST_CASE(BezierTetrahedronTopology_test, DataTypes);
+//// Test suite for all the instanciations
+//TYPED_TEST_SUITE(BezierTetrahedronTopology_test, DataTypes);
 
-// first test topology
-TYPED_TEST( BezierTetrahedronTopology_test , testTopology )
-{
-//	this->loadScene( "tests/SofaTest/BezierTetrahedronTopology.scn");
-	this->createScene();
-	ASSERT_TRUE( this->testBezierTetrahedronTopology());
-	ASSERT_TRUE( this->testBezierTetrahedronGeometry());
-//	ASSERT_TRUE( this->testBezierTetrahedronMass());
-}
+//// first test topology
+//TYPED_TEST( BezierTetrahedronTopology_test , testTopology )
+//{
+////	this->loadScene( "tests/SofaTest/BezierTetrahedronTopology.scn");
+//	this->createScene();
+//	ASSERT_TRUE( this->testBezierTetrahedronTopology());
+//	ASSERT_TRUE( this->testBezierTetrahedronGeometry());
+////	ASSERT_TRUE( this->testBezierTetrahedronMass());
+//}
 
 
 

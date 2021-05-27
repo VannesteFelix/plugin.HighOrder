@@ -4,7 +4,6 @@
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/core/ObjectFactory.h>
 #include "HighOrderTriangleSetTopologyContainer.h"
-#include <SofaBaseTopology/TriangleSetTopologyModifier.h>
 #include "HighOrderTetrahedronSetTopologyContainer.h"
 #include <sofa/core/topology/TopologyChange.h>
 
@@ -252,9 +251,9 @@ void HighOrderTetra2HighOrderTriangleTopologicalMapping::updateTopologicalMappin
                 case core::topology::ENDING_EVENT:
                 {
                     //sout << "INFO_print : Tetra2TriangleTopologicalMapping - ENDING_EVENT" << sendl;
-                    to_tstm->propagateTopologicalChanges();
-                    to_tstm->notifyEndingEvent();
-                    to_tstm->propagateTopologicalChanges();
+                    //to_tstm->propagateTopologicalEngineChanges();
+                    //to_tstm->notifyEndingEvent();
+                    //to_tstm->propagateTopologicalEngineChanges();
                     break;
                 }
 
@@ -317,7 +316,7 @@ void HighOrderTetra2HighOrderTriangleTopologicalMapping::updateTopologicalMappin
 
                 ++itBegin;
             }
-            to_tstm->propagateTopologicalChanges();
+            //to_tstm->propagateTopologicalChanges();
             //Loc2GlobDataVec.endEdit();
         }
     }

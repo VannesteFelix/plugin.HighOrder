@@ -2,7 +2,7 @@
 #define SOFA_COMPONENT_INTERACTIONFORCEFIELD_HIGHORDERTETRAHEDRALCOROTATIONALFEMFORCEFIELD_CPP
 #include "HighOrderTetrahedralDiffusionForceField.inl"
 #include <sofa/core/ObjectFactory.h>
-#include <sofa/defaulttype/Vec3Types.h>
+#include <sofa/defaulttype/VecTypes.h>
 #include "initHighOrderFEM.h"
 
 namespace sofa

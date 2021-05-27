@@ -216,8 +216,8 @@ void HighOrderTetrahedralDiffusionForceField<DataTypes>::FTCFTetrahedronHandler:
 						Jacobian[j][k]=point[j][k]-point[3][k];
 					}
 				}
-				invertMatrix(inverseJacobian,Jacobian);
-				Real jac=fabs(determinant(Jacobian))*ff->numericalIntegrationStiffnessDataArray[i].integrationWeight;
+                defaulttype::invertMatrix(inverseJacobian,Jacobian);
+                Real jac=fabs(defaulttype::determinant(Jacobian))*ff->numericalIntegrationStiffnessDataArray[i].integrationWeight;
 
 				helper::vector<Vec3> SVArray;
 				for (j=0;j<nbControlPoints;j++) {
@@ -569,7 +569,7 @@ template <class DataTypes> void HighOrderTetrahedralDiffusionForceField<DataType
 				size_t rank;
 				for(rank=0,j=0;j<tbiArray.size();++j) {
 					for(k=j+1;k<tbiArray.size();++k,++rank) {
-						coeffMatrix=dyad(shapeFunctionDerivativeArray[j],shapeFunctionDerivativeArray[k])*6*weight;
+                        coeffMatrix=defaulttype::dyad(shapeFunctionDerivativeArray[j],shapeFunctionDerivativeArray[k])*6*weight;
 						for(l=0; l<4; ++l){
 							for(m=l+1; m<4; ++m){
 								coeffMatrix[l][m]+= coeffMatrix[m][l]-(coeffMatrix[l][l]+coeffMatrix[m][m]);
@@ -783,7 +783,7 @@ template <class DataTypes> void HighOrderTetrahedralDiffusionForceField<DataType
 		d_assemblyTime.setValue(((endAssembly-startAssembly)/(Real)helper::system::thread::CTime::getRefTicksPerSec()));
 	}
     /// set the call back function upon creation of a tetrahedron
-    tetrahedronInfo.createTopologicalEngine(_topology,tetrahedronHandler);
+    tetrahedronInfo.createTopologyHandler(_topology,tetrahedronHandler);
     tetrahedronInfo.registerTopologicalData();
     tetrahedronInfo.endEdit();
 
@@ -836,7 +836,7 @@ void HighOrderTetrahedralDiffusionForceField<DataTypes>::computeDiffusivityTenso
 		assert(anisotropyDirection.size()>=1);
 		diffusionTensor.identity();
 
-		diffusionTensor+=dyad(anisotropyDirection[0],anisotropyDirection[0])*(anisotropyParameter[0]-1);
+        diffusionTensor+=defaulttype::dyad(anisotropyDirection[0],anisotropyDirection[0])*(anisotropyParameter[0]-1);
 		diffusionTensor*=d_diffusivity.getValue();
 	}
 }
